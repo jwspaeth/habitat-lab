@@ -15,7 +15,7 @@ import numpy as np
 import torch
 import tqdm
 from gym import spaces
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf, read_write
 from torch import nn
 from torch.optim.lr_scheduler import LambdaLR
 
@@ -138,8 +138,10 @@ class PPOTrainer(BaseRLTrainer):
 
         return t.to(device=orig_device)
 
-    def _setup_actor_critic_agent(self, ppo_cfg: "DictConfig") -> None:
+    def _setup_actor_critic_agent(self, config: "DictConfig") -> None:
         r"""Sets up actor critic and agent for PPO.
+        The given config object could be the current or resumed config.
+        The self.config object is the current config.
 
         Args:
             ppo_cfg: config node with relevant params
@@ -147,19 +149,24 @@ class PPOTrainer(BaseRLTrainer):
         Returns:
             None
         """
+        ppo_cfg = config.habitat_baselines.rl.ppo
         logger.add_filehandler(self.config.habitat_baselines.log_file)
 
+        # Changed to use the potentially resumed config
         policy = baseline_registry.get_policy(
-            self.config.habitat_baselines.rl.policy.name
+            config.habitat_baselines.rl.policy.name
         )
         observation_space = self.obs_space
-        self.obs_transforms = get_active_obs_transforms(self.config)
+
+        # Changed to use the potentially resumed config
+        self.obs_transforms = get_active_obs_transforms(config)
         observation_space = apply_obs_transforms_obs_space(
             observation_space, self.obs_transforms
         )
 
+        # Changed to use the potentially resumed config
         self.actor_critic = policy.from_config(
-            self.config,
+            config,
             observation_space,
             self.env_action_space,
             orig_action_space=self.orig_env_action_space,
@@ -317,7 +324,7 @@ class PPOTrainer(BaseRLTrainer):
         ):
             os.makedirs(self.config.habitat_baselines.checkpoint_folder)
 
-        self._setup_actor_critic_agent(ppo_cfg)
+        self._setup_actor_critic_agent(self.config)
         if resume_state is not None:
             self.agent.load_state_dict(resume_state["state_dict"])
             self.agent.optimizer.load_state_dict(resume_state["optim_state"])
@@ -914,6 +921,13 @@ class PPOTrainer(BaseRLTrainer):
             ckpt_dict["config"]
         )
 
+        # Assume that if we're evaluating, we should use the current number
+        # of environments as it may be reduced from training
+        with read_write(config):
+            config.habitat_baselines.num_environments = (
+                self.config.habitat_baselines.num_environments
+            )
+
         ppo_cfg = config.habitat_baselines.rl.ppo
 
         with read_write(config):
@@ -939,7 +953,7 @@ class PPOTrainer(BaseRLTrainer):
 
         self._init_envs(config, is_eval=True)
 
-        self._setup_actor_critic_agent(ppo_cfg)
+        self._setup_actor_critic_agent(config)
         action_shape, discrete_actions = get_action_space_info(
             self.policy_action_space
         )

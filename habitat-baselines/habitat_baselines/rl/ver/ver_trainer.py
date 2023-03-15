@@ -211,7 +211,7 @@ class VERTrainer(PPOTrainer):
         self.obs_space = copy.deepcopy(actor_obs_space)
         self.ver_config = self.config.habitat_baselines.rl.ver
 
-        self._setup_actor_critic_agent(ppo_cfg)
+        self._setup_actor_critic_agent(self.config)
         if resume_state is not None:
             self.agent.load_state_dict(resume_state["state_dict"])
             self.agent.optimizer.load_state_dict(resume_state["optim_state"])
