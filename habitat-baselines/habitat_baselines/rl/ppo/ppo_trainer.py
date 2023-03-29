@@ -119,6 +119,14 @@ class PPOTrainer(BaseRLTrainer):
     def obs_space(self):
         if self._obs_space is None and self.envs is not None:
             self._obs_space = self.envs.observation_spaces[0]
+
+            # Remove extra sim sensors from _obs_space to avoid using the extra sensors
+            # with the reloaded policy
+            for (
+                key
+            ) in self.config.habitat_baselines.eval.extra_sim_sensors.keys():
+                self._obs_space.spaces.pop(key)
+
         return self._obs_space
 
     @obs_space.setter
@@ -936,7 +944,9 @@ class PPOTrainer(BaseRLTrainer):
         if len(self.config.habitat_baselines.eval.video_option) > 0:
             agent_config = get_agent_config(config.habitat.simulator)
             agent_sensors = agent_config.sim_sensors
-            extra_sensors = config.habitat_baselines.eval.extra_sim_sensors
+            extra_sensors = (
+                self.config.habitat_baselines.eval.extra_sim_sensors
+            )
             with read_write(agent_sensors):
                 agent_sensors.update(extra_sensors)
             with read_write(config):
