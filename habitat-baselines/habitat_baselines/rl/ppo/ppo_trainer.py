@@ -929,11 +929,18 @@ class PPOTrainer(BaseRLTrainer):
             ckpt_dict["config"]
         )
 
-        # Assume that if we're evaluating, we should use the current number
-        # of environments as it may be reduced from training
+        # Copy some parameters over from the given config
         with read_write(config):
+            # Assume that if we're evaluating, we should use the current number
+            # of environments as it may be reduced from training
             config.habitat_baselines.num_environments = (
                 self.config.habitat_baselines.num_environments
+            )
+
+            # Task measurements might be intentionally different between
+            # train and eval
+            config.habitat.task.measurements = (
+                self.config.habitat.task.measurements
             )
 
         ppo_cfg = config.habitat_baselines.rl.ppo

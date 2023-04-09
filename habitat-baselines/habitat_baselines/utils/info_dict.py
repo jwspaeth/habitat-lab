@@ -5,7 +5,11 @@ import numpy as np
 
 # These metrics are not scalars and cannot be easily reported
 # (unless using videos)
-NON_SCALAR_METRICS = {"top_down_map", "collisions.is_collision"}
+NON_SCALAR_METRICS = {
+    "top_down_map",
+    "social_top_down_map",
+    "collisions.is_collision",
+}
 
 
 def extract_scalars_from_info(info: Dict[str, Any]) -> Dict[str, float]:

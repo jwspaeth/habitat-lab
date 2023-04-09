@@ -244,11 +244,19 @@ def observations_to_image(observation: Dict, info: Dict) -> np.ndarray:
         render_frame = draw_collision(render_frame)
 
     top_down_map_key = "top_down_map"
+    social_top_down_map_key = "social_top_down_map"
     if top_down_map_key in info:
         top_down_map = maps.colorize_draw_agent_and_fit_to_height(
             info[top_down_map_key], render_frame.shape[0]
         )
         render_frame = np.concatenate((render_frame, top_down_map), axis=1)
+    elif social_top_down_map_key in info:
+        social_top_down_map = maps.colorize_draw_agent_and_fit_to_height(
+            info[social_top_down_map_key], render_frame.shape[0]
+        )
+        render_frame = np.concatenate(
+            (render_frame, social_top_down_map), axis=1
+        )
     return render_frame
 
 
@@ -357,8 +365,9 @@ def overlay_frame(frame, info, additional=None):
     for k, v in flattened_info.items():
         if isinstance(v, str):
             lines.append(f"{k}: {v}")
-        else:
+        elif isinstance(v, float):
             lines.append(f"{k}: {v:.2f}")
+
     if additional is not None:
         lines.extend(additional)
 

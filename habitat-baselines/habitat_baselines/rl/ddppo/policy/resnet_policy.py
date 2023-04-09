@@ -95,9 +95,15 @@ class PointNavResNetPolicy(NetPolicy):
         **kwargs,
     ):
         # Exclude cameras for rendering from the observation space.
+        # ignore_names = [
+        #     sensor.uuid
+        #     for sensor in config.habitat_baselines.eval.extra_sim_sensors.values()
+        # ]
+        # Temporary fix because sensor configs don't contain a uuid. Only the sensor
+        # does and it's not instantiated yet
         ignore_names = [
-            sensor.uuid
-            for sensor in config.habitat_baselines.eval.extra_sim_sensors.values()
+            sensor_key
+            for sensor_key in config.habitat_baselines.eval.extra_sim_sensors.keys()
         ]
         filtered_obs = spaces.Dict(
             OrderedDict(
