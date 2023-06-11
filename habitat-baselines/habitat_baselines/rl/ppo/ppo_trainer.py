@@ -943,10 +943,12 @@ class PPOTrainer(BaseRLTrainer):
                 self.config.habitat.task.measurements
             )
 
-        ppo_cfg = config.habitat_baselines.rl.ppo
+            # Edited to use the eval split from the current config
+            config.habitat.dataset.split = (
+                self.config.habitat_baselines.eval.split
+            )
 
-        with read_write(config):
-            config.habitat.dataset.split = config.habitat_baselines.eval.split
+        ppo_cfg = config.habitat_baselines.rl.ppo
 
         if len(self.config.habitat_baselines.eval.video_option) > 0:
             agent_config = get_agent_config(config.habitat.simulator)
@@ -1068,6 +1070,7 @@ class PPOTrainer(BaseRLTrainer):
                                 i
                             ] = action_data.rnn_hidden_states[i]
                             prev_actions[i].copy_(action_data.actions[i])  # type: ignore
+
             # NB: Move actions to CPU.  If CUDA tensors are
             # sent in to env.step(), that will create CUDA contexts
             # in the subprocesses.

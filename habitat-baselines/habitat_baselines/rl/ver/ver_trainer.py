@@ -147,10 +147,14 @@ class VERTrainer(PPOTrainer):
             self._my_t_zero,
         )
 
-        has_report_resume_state = (
-            resume_state is not None
-            and "report_worker_state" in resume_state["requeue_stats"]
-        )
+        if resume_state is not None and "requeue_stats" in resume_state:
+            has_report_resume_state = (
+                resume_state is not None
+                and "report_worker_state" in resume_state["requeue_stats"]
+            )
+        else:
+            has_report_resume_state = False
+
         run_id = None
         if (
             has_report_resume_state
@@ -214,7 +218,11 @@ class VERTrainer(PPOTrainer):
         self._setup_actor_critic_agent(self.config)
         if resume_state is not None:
             self.agent.load_state_dict(resume_state["state_dict"])
-            self.agent.optimizer.load_state_dict(resume_state["optim_state"])
+
+            if "optim_state" in resume_state:
+                self.agent.optimizer.load_state_dict(
+                    resume_state["optim_state"]
+                )
 
         rollouts_obs_space = copy.deepcopy(self.obs_space)
         if self._static_encoder:
@@ -434,9 +442,16 @@ class VERTrainer(PPOTrainer):
                 resume_state["config"]
             )
 
-            requeue_stats = resume_state["requeue_stats"]
-            self.num_steps_done = requeue_stats["num_steps_done"]
-            self.num_updates_done = requeue_stats["num_updates_done"]
+            try:
+                requeue_stats = resume_state["requeue_stats"]
+                self.num_steps_done = requeue_stats["num_steps_done"]
+                self.num_updates_done = requeue_stats["num_updates_done"]
+            except:
+                print(
+                    "Could not load requeue stats from resume state. Setting num_steps_done and num_updates_done to 0."
+                )
+                self.num_steps_done = 0
+                self.num_updates_done = 0
 
         self._init_train(resume_state)
 
@@ -447,7 +462,7 @@ class VERTrainer(PPOTrainer):
             lr_lambda=lambda x: cosine_decay(self.percent_done()),
         )
 
-        if resume_state is not None:
+        if resume_state is not None and "requeue_stats" in resume_state:
             lr_scheduler.load_state_dict(resume_state["lr_sched_state"])
 
             requeue_stats = resume_state["requeue_stats"]
