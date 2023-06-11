@@ -544,6 +544,27 @@ class Success(Measure):
         else:
             self._metric = 0.0
 
+    def assess_success_distance(
+        self, task: EmbodiedTask, *args: Any, **kwargs: Any
+    ):
+        """
+        Included to assess success distance without requiring
+        task to be stopped
+
+        :param task:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        distance_to_target = task.measurements.measures[
+            DistanceToGoal.cls_uuid
+        ].get_metric()
+
+        if distance_to_target < self._success_distance:
+            return 1.0
+        else:
+            return 0.0
+
 
 @registry.register_measure
 class SPL(Measure):
