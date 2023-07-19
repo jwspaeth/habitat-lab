@@ -24,7 +24,7 @@ def get_writer(config, **kwargs):
             config.habitat_baselines.tensorboard_dir, **kwargs
         )
     elif config.habitat_baselines.writer_type == "wb":
-        return WeightsAndBiasesWriter(config)
+        return WeightsAndBiasesWriter(config, **kwargs)
     else:
         raise ValueError("Unrecongized writer")
 
